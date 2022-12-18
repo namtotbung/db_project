@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
+    <title>Register</title>
+</head>
+<body>
+    <h1>Register</h1>
+
+    <ul style="color:#ff0000;">
+        <% if (typeof errors != "undefined") { %> <% errors.forEach(error => { %>
+            <li><%= error.message %></li>
+        <% }) %> <% } %>
+    </ul>
+
+    <form action="/register" method="POST">
+        <h3>Account</h3>
+        <div>
+            <input type="text" name="username" placeholder="Username" required/>
+        </div>
+        <div>
+            <input type="password" name="password" placeholder="Password" required/>
+        </div>
+        <div>
+            <input type="password" name="password2" placeholder="Confirmation" required/>
+        </div>
+
+        <h3>Additional Information</h3>
+        <div>
+            <p>Firstname</p>
+            <input type="text" name="firstname" placeholder="Nguyen" required/>
+        </div>
+        <div>
+            <p>Surname</p>
+            <input type="text" name="surname" placeholder="Van A" required/>
+        </div>
+        <div>
+            <p>Gender</p>
+            <label>
+                <input type="radio" name="gender" value="male" required>
+                Male
+            </label><br>
+            <label>
+                <input type="radio" name="gender" value="female">
+                Female
+            </label><br>
+            <label>
+                <input type="radio" name="gender" value="other">
+                Other
+            </label><br>
+        </div>
+        <div>
+            <p>Birthday</p>
+            <input type="date" name="birthday" required>
+        </div>
+        <div>
+            <p>Email</p>
+            <input type="email" name="email" placeholder="abc@xyz.com" required/>
+        </div>
+        <div>
+            <p>Phone number</p>
+            <input type="tel" name="phone_number" required>
+        </div>
+
+        <div>
+            <input type="submit" value="Register" />
+        </div>
+    </form>
+    <a href="/login">Already registered? Login here</a>
+</body>
+</html>

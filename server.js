@@ -1,7 +1,7 @@
 const express = require("express");
 const flash = require("express-flash"); //flash requires session
 const session = require("express-session");
-const { pool, db } = require("./database/db_config.js");
+const { db } = require("./database/db_config.js");
 const { createHash } = require('crypto');
 
 const app = express();

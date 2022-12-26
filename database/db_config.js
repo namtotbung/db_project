@@ -1,10 +1,4 @@
 require("dotenv").config();
-const { Pool } = require("pg");
-
-const pool = new Pool();
-
-module.exports = { pool };
-
 const pgp = require('pg-promise')();
 
 const cn = {

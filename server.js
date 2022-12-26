@@ -1,7 +1,7 @@
 const express = require("express");
 const flash = require("express-flash"); //flash requires session
 const session = require("express-session");
-const { pool } = require("./database/db_config.js");
+const { pool, db } = require("./database/db_config.js");
 const { createHash } = require('crypto');
 
 const app = express();
@@ -33,18 +33,20 @@ app.get("/dashboard", (req, res) => {
 app.post("/login", async (req, res) => {
     let {username, password} = req.body;
     let errors = [];
-    pool.query(`SELECT username, password_hash FROM account WHERE username=$1;`, [username], (err, results) => {
-        if (err) {
-            console.log(err);
-        }
-        if (results.rows.length === 1 && hash(password) === results.rows[0].password_hash) {
-            res.redirect("/dashboard");
-        }
-        else {
-            errors.push({message: "Incorrect username or password"});
-            res.render("login.ejs", {errors});
-        }
-    });
+    await db.any('SELECT username, password_hash FROM account WHERE username=$1;', [username])
+        .then(data => {
+            console.log(data);
+            if (data.length === 1 && hash(password) === data[0].password_hash) {
+                res.redirect("/dashboard");
+            }
+            else {
+                errors.push({message: "Incorrect username or password"});
+                res.render("login.ejs", {errors});
+            }
+        })
+        .catch(error => {
+            console.log(error);
+        });
 });
 
 app.post("/register", async (req, res) => {
@@ -62,54 +64,43 @@ app.post("/register", async (req, res) => {
     if (errors.length > 0) {
         res.render("register.ejs", {errors});
     }
-    else {
-        pool.query(`SELECT * FROM account WHERE username = $1`, [username], (err, results) => {
-            if (err) {
-                console.log(err);
-            }
-            if (results.rows.length > 0) {
+    await db.any(`SELECT * FROM account WHERE username = $1`, [username])
+        .then(data => {
+            if (data.length > 0) {
                 errors.push({message: "Username already registered"});
                 res.render("register.ejs", {errors});
             }
-            else {
-                let personal_information_id;
-                let people_id;
-                pool.query(`INSERT INTO personal_information (firstname, surname, gender, birthday, email, phone_number)
-                            VALUES ($1, $2, $3, $4, $5, $6)
-                            RETURNING *`,
-                    [firstname, surname, gender, birthday, email, phone_number],
-                    (err, results) => {
-                        if (err) {
-                            throw err;
-                        }
-                        console.log(results.rows);
-                        personal_information_id = results.rows.id;
-                    }
-                );
-                pool.query(`INSERT INTO people (personal_info, current_position) VALUES ($1, $2) RETURNING *`,
-                    [personal_information_id, 'staff'],
-                    (err, results) => {
-                        if (err) {
-                            throw err;
-                        }
-                        console.log(results.rows);
-                        people_id = results.rows.id;
-                    }
-                );
-                pool.query(`INSERT INTO account (username, password_hash, account_owner) VALUES ($1, $2, $3) RETURNING *`,
-                    [username, hash(password), people_id],
-                    (err, results) => {
-                        if (err) {
-                            throw err;
-                        }
-                        console.log(results.rows);
-                    }
-                );
-                req.flash("success_msg", "You are now registered, please log in");
-                res.redirect("/login");
-            }
+            let personal_information_id;
+            let people_id;
+            db.any(
+                `INSERT INTO personal_information (firstname, surname, gender, birthday, email, phone_number) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, firstname, surname, gender, birthday, email, phone_number`,
+                [firstname, surname, gender, birthday, email, phone_number])
+                .then(data => {
+                    console.log(data);
+                    personal_information_id = data[0].id;
+                    return db.any(
+                        `INSERT INTO people (personal_info, current_position) VALUES ($1, $2) RETURNING id, personal_info, current_position`,
+                        [personal_information_id, 'staff'])
+                })
+                .then(data => {
+                    console.log(data);
+                    people_id = data[0].id;
+                    return db.any(
+                        `INSERT INTO account (username, password_hash, account_owner) VALUES ($1, $2, $3) RETURNING username, password_hash, account_owner`,
+                        [username, hash(password), people_id])
+                })
+                .then(data => {
+                    console.log(data);
+                    req.flash("success_msg", "You are now registered, please log in");
+                    res.redirect("/login");
+                })
+                .catch(error => {
+                    console.log(error);
+                });
         })
-    }
+        .catch(error => {
+            console.log(error);
+        });
 });
 
 app.listen(PORT, (err) => {

@@ -1,3 +1,11 @@
+create type gen as enum ('male', 'female', 'other');
+
+create type company_role as enum ('manager', 'team_leader', 'staff');
+
+create type project_status as enum ('not_assigned', 'in_progress', 'done');
+
+create type task_status as enum ('not_assigned', 'in_progress', 'done');
+
 drop table if exists team;
 create table team
 (
@@ -7,10 +15,10 @@ create table team
     speciality varchar(40) not null
 );
 
-drop table if exists personal_information;
-create table personal_information
+drop table if exists people;
+create table people
 (
-    id           serial
+    id               serial
         primary key,
     firstname    varchar(20) not null,
     surname      varchar(40) not null,
@@ -18,20 +26,11 @@ create table personal_information
     birthday     date        not null,
     email        varchar(60) not null,
     phone_number char(10)    not null,
-    constraint personal_information_check
-        check (((email)::text ~~ '%@%.%'::text) AND (phone_number ~~ '0%'::text))
-);
-
-drop table if exists people;
-create table people
-(
-    id               serial
-        primary key,
-    personal_info    integer
-        references personal_information,
     current_position company_role not null,
     team             integer
         references team
+        constraint email_phone_number_check
+            check (((email)::text ~~ '%@%.%'::text) AND (phone_number ~~ '0%'::text))
 );
 
 drop table if exists project;

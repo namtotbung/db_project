@@ -33,13 +33,32 @@ app.get("/dashboard", (req, res) => {
 app.post("/login", async (req, res) => {
     let {username, password} = req.body;
     let errors = [];
-    await db.any('SELECT username, password_hash FROM account WHERE username=$1;', [username])
-        .then(data => {
+    await db.any('SELECT * FROM account WHERE username=$1;', [username])
+        .then(async data => {
             console.log(data);
+            let owner_id = data.account_owner;
+
             if (data.length === 1 && hash(password) === data[0].password_hash) {
-                res.redirect("/dashboard");
-            }
-            else {
+                let dashboard_info = [];
+                let personal_info_id;
+                await db.any('SELECT personal_info FROM people WHERE id=$1;', [owner_id])
+                    .then(data => {
+                        console.log(data);
+                        personal_info_id = data.personal_info;
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+                await db.any('SELECT * FROM personal_information WHERE id=$1;', [personal_info_id])
+                    .then(data => {
+                        console.log(data);
+                        dashboard_info.push({message: data.firstname})
+                        res.render("dashboard.ejs", {dashboard_info});
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+            } else {
                 errors.push({message: "Incorrect username or password"});
                 res.render("login.ejs", {errors});
             }

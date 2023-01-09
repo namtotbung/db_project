@@ -9,7 +9,11 @@
 </head>
 <body>
     <h1>Dashboard</h1>
-
+    <ul style="color:#ff0000;">
+        <% if (typeof dashboard_info != "undefined") { %>
+            <li><%= "Working" %></li>
+        <% } %>
+    </ul>
     <a href="/">Logout</a>
 </body>
 </html>
